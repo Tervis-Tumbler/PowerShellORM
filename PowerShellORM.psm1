@@ -14,7 +14,7 @@ function New-SQLSelect {
 select
 *
 from
-$TableName
+$TableName with (nolock)
 where 1 = 1
 $(
     $Parameters | New-SQLWhereCondition -TableName $TableName
