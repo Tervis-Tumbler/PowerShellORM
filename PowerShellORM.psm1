@@ -1,9 +1,15 @@
-
+function New-PowerShellORMModule {
+    param (
+        $ModuleName,
+        $Table
+    )
+    #New-Item -Path function:New-Test
+}
 
 function New-SQLSelect {
     param (
         [Parameter(Mandatory)]$TableName,
-        [Parameter(Mandatory)]$Parameters,
+        $Parameters = @(),
         $ArbitraryWherePredicate
     )
 
@@ -17,14 +23,14 @@ from
 $TableName with (nolock)
 where 1 = 1
 $(
-    $Parameters | New-SQLWhereCondition -TableName $TableName
+    $Parameters.GetEnumerator() | New-SQLWherePredicate -TableName $TableName
     $ArbitraryWherePredicate
 )
 "@
     $OFS = $OFSBeforeChange
 }
 
-function New-SQLWhereCondition {
+function New-SQLWherePredicate {
     [Cmdletbinding(DefaultParameterSetName="Name")]
     param (
         [Parameter(Mandatory)]$TableName,
@@ -34,6 +40,16 @@ function New-SQLWhereCondition {
     )
     process {
         if ($Key) {$Name = $Key}
-        "AND $TableName.$Name = '$Value'`r`n"
+        
+        if ($Value.count -gt 1) {
+            $ValuesQuoted = $Value | ForEach-Object { 
+                "'$_'"
+            }
+            $ValuesAsSQLArrayLiteral = "($($ValuesQuoted -join ","))"
+
+            "AND $TableName.$Name in $ValuesAsSQLArrayLiteral`r`n"
+        } else {
+            "AND $TableName.$Name = '$Value'`r`n"
+        }
     }
 }
