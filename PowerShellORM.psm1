@@ -106,7 +106,13 @@ function New-SQLSetValueStatement {
     }
     process {
         if ($Key) {$Name = $Key}
-        $SetStatements.Add("[$Name] = '$Value'`r`n") | Out-Null
+        $ValueInStatement = if ($Value -notmatch "null") {
+            "'$Value'"
+        } else {
+            $Value
+        }
+
+        $SetStatements.Add("[$Name] = $ValueInStatement`r`n") | Out-Null
     }
     end {
         $SetStatements -join ","
